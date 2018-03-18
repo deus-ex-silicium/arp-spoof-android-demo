@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">ARPSpoof</string>
+    <string name="idle">Idle…</string>
+    <string name="bad_ip">Invalid IP address!</string>
+    <string name="spoofing">Spoofing…</string>
+    <string name="init">Initializing…</string>
+    <string name="err_runtime">Runtime error</string>
+    <string name="err_usage">Wrong command usage</string>
 </resources>

