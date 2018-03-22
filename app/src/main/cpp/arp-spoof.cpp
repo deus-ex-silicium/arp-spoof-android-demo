@@ -7,20 +7,21 @@
 #include <atomic>
 #include <unistd.h>
 #include <bits/unique_ptr.h>
-#include "./include/tins/arp.h"
-#include "./include/tins/network_interface.h"
-#include "./include/tins/utils.h"
-#include "./include/tins/ethernetII.h"
-#include "./include/tins/packet_sender.h"
 
-/*
+#include <tins/arp.h>
+#include <tins/network_interface.h>
+#include <tins/utils.h>
+#include <tins/ethernetII.h>
+#include <tins/packet_sender.h>
+
+
 #include <android/log.h>
 #define  LOG_TAG    "NATIVE"
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
-*/
+
 
 using std::cout;
 using std::runtime_error;
@@ -92,6 +93,7 @@ void do_arp_spoofing(
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         cout << "Usage: " <<* argv << " <Gateway> <Victim>" << endl;
+
         return 1;
     }
     IPv4Address gw, victim;

@@ -34,8 +34,8 @@
 #include <iosfwd>
 #include <functional>
 #include <stdint.h>
-#include "cxxstd.h"
-#include "macros.h"
+#include <tins/cxxstd.h>
+#include <tins/macros.h>
 
 namespace Tins {
 

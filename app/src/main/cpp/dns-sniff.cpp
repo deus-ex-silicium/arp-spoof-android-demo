@@ -1,18 +1,18 @@
 /*
- * Copyright (c) 2017, Matias Fontanini
+ * Copyright (c) 2016, Matias Fontanini
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above
  *   copyright notice, this list of conditions and the following disclaimer
  *   in the documentation and/or other materials provided with the
  *   distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -27,55 +27,40 @@
  *
  */
 
-#ifndef TINS_TINS_H
-#define TINS_TINS_H
+#include <tins/tins.h>
+#include <iostream>
 
-#include <tins/dns.h>
-#include <tins/arp.h>
-#include <tins/bootp.h>
-#include <tins/dhcp.h>
-#include <tins/eapol.h>
-#include <tins/ethernetII.h>
-#include <tins/ieee802_3.h>
-#include <tins/llc.h>
-#include <tins/icmp.h>
-#include <tins/icmpv6.h>
-#if defined(TINS_HAVE_DOT11)
-#include <tins/dot11.h>
-#endif
-#include <tins/dot1q.h>
-#include <tins/dot3.h>
-#include <tins/ip.h>
-#include <tins/ipv6.h>
-#include <tins/mpls.h>
-#include <tins/packet_sender.h>
-#include <tins/packet_writer.h>
-#include <tins/pdu.h>
-#include <tins/radiotap.h>
-#include <tins/rawpdu.h>
-#include <tins/snap.h>
-#include <tins/sniffer.h>
-#include <tins/tcp.h>
-#include <tins/udp.h>
-#include <tins/utils.h>
-#include <tins/tcp_stream.h>
-#include <tins/crypto.h>
-#include <tins/pdu_cacher.h>
-#include <tins/rsn_information.h>
-#include <tins/ipv6_address.h>
-#include <tins/ip_address.h>
-#include <tins/packet.h>
-#include <tins/timestamp.h>
-#include <tins/sll.h>
-#include <tins/dhcpv6.h>
-#include <tins/pppoe.h>
-#include <tins/stp.h>
-#include <tins/handshake_capturer.h>
-#include <tins/address_range.h>
-#include <tins/pdu_allocator.h>
-#include <tins/ipsec.h>
-#include <tins/ip_reassembler.h>
-#include <tins/ppi.h>
-#include <tins/pdu_iterator.h>
+using std::cout;
+using std::endl;
 
-#endif // TINS_TINS_H
+using namespace Tins;
+
+bool callback(const PDU& pdu) {
+    // The packet probably looks like this:
+    // EthernetII / IP / UDP / RawPDU
+    // So we retrieve the RawPDU layer, and construct a
+    // DNS PDU using its contents.
+    DNS dns = pdu.rfind_pdu<RawPDU>().to<DNS>();
+    
+    // Retrieve the queries and print the domain name:
+    for (const auto& query : dns.queries()) {
+        cout << query.dname() << std::endl;
+    }
+    return true;
+}
+
+int main(int argc, char* argv[]) {
+    if(argc != 2) {
+        cout << "Usage: " <<* argv << " <interface>" << endl;
+        return 1;
+    }
+    // Sniff on the provided interface in promiscuos mode
+    SnifferConfiguration config;
+    config.set_promisc_mode(true);
+    // Only capture udp packets sent to port 53
+    config.set_filter("udp and dst port 53");
+    Sniffer sniffer(argv[1], config);
+    
+    // Start the capture
+    sniffer.sniff_loop(callback);
+}

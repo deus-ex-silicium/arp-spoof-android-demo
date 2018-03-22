@@ -19,7 +19,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
-                targets "arp-spoof"
+                targets "arp-spoof", "dns-sniff"
                 abiFilters "armeabi-v7a"
                 cppFlags "-std=c++11 -frtti -fexceptions"
             }

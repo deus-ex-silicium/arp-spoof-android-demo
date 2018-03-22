@@ -27,7 +27,7 @@
  *
  */
 
-#include "../config.h"
+#include <tins/config.h>
 
 #if !defined(TINS_RADIOTAP_WRITER_H) && defined(TINS_HAVE_DOT11)
 
@@ -35,7 +35,7 @@
 
 #include <vector>
 #include <stdint.h>
-#include "../radiotap.h"
+#include <tins/radiotap.h>
 
 namespace Tins {
 namespace Utils {

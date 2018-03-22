@@ -1652,15 +1652,6 @@ public class Shell {
 
             Debug.log(String.format("[%s%%] END", shell.toUpperCase(Locale.ENGLISH)));
         }
-        public synchronized void send(String cmd) {
-            try {
-                STDIN.write((cmd + "\n").getBytes("UTF-8"));
-                STDIN.flush();
-            } catch (IOException e) {
-                e.getMessage();
-                Log.e("ROOT", "Can't send to STDIN");
-            }
-        }
 
         /**
          * Try to clean up as much as possible from a shell that's gotten itself

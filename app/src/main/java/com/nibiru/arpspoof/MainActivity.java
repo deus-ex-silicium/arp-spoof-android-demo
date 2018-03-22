@@ -8,6 +8,9 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.TextView;
 
+import com.nibiru.arpspoof.db.DatabaseManager;
+import com.nibiru.arpspoof.db.DnsEntry;
+import com.nibiru.arpspoof.db.LogDbHelper;
 import com.nibiru.arpspoof.su.Shell;
 
 import java.util.ArrayList;
@@ -17,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
     /**************************************CLASS FIELDS********************************************/
     protected final String TAG = getClass().getSimpleName();
     private static volatile Shell.Interactive rootSession = null;
+    private static DatabaseManager manDb;
     private TextView tv_status;
     private boolean spoofing = false;
     /**************************************CLASS METHODS*******************************************/
@@ -27,17 +31,19 @@ public class MainActivity extends AppCompatActivity {
         tv_status = (TextView) findViewById(R.id.tv_status);
         openRootShell();
         sendGetArpPid();
+        DatabaseManager.initializeInstance(new LogDbHelper(this));
     }
 
     public void onClickBtn(View v) {
         spoofing = !spoofing;
         if (!spoofing){
             sendGenericRootCommand("kill -2 $pid_arp");
+            sendGenericRootCommand("sysctl -w net.ipv4.ip_forward=0");
             tv_status.setText(R.string.idle);
             return;
         }
         String gw = "192.168.12.1";
-        String ip = "192.168.12.94";
+        String ip = "192.168.12.84";
         if (!Patterns.IP_ADDRESS.matcher(gw).matches()
                 || !Patterns.IP_ADDRESS.matcher(ip).matches()){
             setStatus(R.string.bad_ip);
@@ -50,6 +56,10 @@ public class MainActivity extends AppCompatActivity {
                 sendArpSpoofCheck();
             }
         }, 10000);
+    }
+
+    public void onLogShowClick(View v) {
+        sendDnsSniffStart();
     }
 
     private void setStatus(int s){
@@ -78,6 +88,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void sendDnsSniffStart(){
+        String path = getApplicationInfo().dataDir;
+        final String cmd = String.format("LD_LIBRARY_PATH=%s/lib/ %s/lib/libdnssniff.so wlan0", path, path);
+        rootSession.addCommand(new String[]{cmd}, 0,
+                new Shell.OnCommandLineListener() {
+                    @Override
+                    public void onCommandResult(int commandCode, int exitCode) {
+                        switch (exitCode){
+                            case 0:
+                                setStatus(R.string.init);
+                                break;
+                        }
+                        Log.i("ROOT",  String.format("%s \n(exit code: %d)", cmd, exitCode));
+                    }
+                    @Override
+                    public void onLine(String line) {
+                        Log.i("DNS", line);
+                    }
+                });
+    }
+
     private void sendGetArpPid(){
         final String cmd = String.format("pid_arp=$(pgrep -f %s)", getApplicationInfo().dataDir);
         rootSession.addCommand(new String[]{cmd}, 0,
@@ -101,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         String path = getApplicationInfo().dataDir;
         final String cmd = String.format("LD_LIBRARY_PATH=%s/lib/ %s/lib/libarpspoof.so %s %s &",
                 path, path, gw, target);
-        rootSession.addCommand(new String[]{cmd, "pid_arp=$!"}, 0,
+        rootSession.addCommand(new String[]{"sysctl -w net.ipv4.ip_forward=1 ",cmd, "pid_arp=$!"}, 0,
                 new Shell.OnCommandResultListener() {
                     @Override
                     public void onCommandResult(int commandCode, int exitCode, List<String> output) {
