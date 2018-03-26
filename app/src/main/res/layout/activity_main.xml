@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onClickBtn"
-        android:text="Spoof"
+        android:text="ARP Spoof toggle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:onClick="onLogShowClick"
-        android:text="Show log"
+        android:text="DNS sniff toggle"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_spoof" />
@@ -45,7 +45,7 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="LAN MITM Target"
+        android:hint="LAN MITM Target"
         app:layout_constraintBottom_toTopOf="@id/tv_status"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
@@ -56,7 +56,7 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="LAN Gateway IP"
+        android:hint="LAN Gateway IP"
         app:layout_constraintBottom_toTopOf="@id/et_target"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />

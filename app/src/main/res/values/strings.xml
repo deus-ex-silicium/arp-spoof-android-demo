@@ -6,4 +6,5 @@
     <string name="init">Initializing…</string>
     <string name="err_runtime">Runtime error</string>
     <string name="err_usage">Wrong command usage</string>
+    <string name="spoofNsniff">Spoofing and sniffing…</string>
 </resources>

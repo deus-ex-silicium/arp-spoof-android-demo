@@ -6,10 +6,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.nibiru.arpspoof.db.DatabaseManager;
-import com.nibiru.arpspoof.db.DnsEntry;
 import com.nibiru.arpspoof.db.LogDbHelper;
 import com.nibiru.arpspoof.su.Shell;
 
@@ -20,16 +21,23 @@ public class MainActivity extends AppCompatActivity {
     /**************************************CLASS FIELDS********************************************/
     protected final String TAG = getClass().getSimpleName();
     private static volatile Shell.Interactive rootSession = null;
+    private static volatile Shell.Interactive progSession = null;
     private static DatabaseManager manDb;
     private TextView tv_status;
+    private EditText et_gateway;
+    private EditText et_target;
     private boolean spoofing = false;
+    private boolean sniffing = false;
     /**************************************CLASS METHODS*******************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tv_status = (TextView) findViewById(R.id.tv_status);
-        openRootShell();
+        et_gateway = (EditText) findViewById(R.id.et_gateway);
+        et_target = (EditText) findViewById(R.id.et_target);
+        rootSession = openRootShell(rootSession);
+        progSession = openRootShell(progSession);
         sendGetArpPid();
         DatabaseManager.initializeInstance(new LogDbHelper(this));
     }
@@ -42,8 +50,10 @@ public class MainActivity extends AppCompatActivity {
             tv_status.setText(R.string.idle);
             return;
         }
-        String gw = "192.168.12.1";
-        String ip = "192.168.12.84";
+        String gw = et_gateway.getText().toString();
+        String ip = et_target.getText().toString();
+        //String gw = "192.168.12.1";
+        //String ip = "192.168.12.84";
         if (!Patterns.IP_ADDRESS.matcher(gw).matches()
                 || !Patterns.IP_ADDRESS.matcher(ip).matches()){
             setStatus(R.string.bad_ip);
@@ -59,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onLogShowClick(View v) {
-        sendDnsSniffStart();
+        sendDnsSniffToggle();
     }
 
     private void setStatus(int s){
@@ -73,6 +83,11 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.string.spoofing:
                 spoofing = true;
+                sniffing = false;
+                break;
+            case R.string.spoofNsniff:
+                spoofing = true;
+                sniffing = true;
                 break;
         }
         Log.e(TAG, getString(s));
@@ -88,25 +103,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void sendDnsSniffStart(){
-        String path = getApplicationInfo().dataDir;
-        final String cmd = String.format("LD_LIBRARY_PATH=%s/lib/ %s/lib/libdnssniff.so wlan0", path, path);
-        rootSession.addCommand(new String[]{cmd}, 0,
-                new Shell.OnCommandLineListener() {
-                    @Override
-                    public void onCommandResult(int commandCode, int exitCode) {
-                        switch (exitCode){
-                            case 0:
-                                setStatus(R.string.init);
-                                break;
+    private void sendDnsSniffToggle(){
+        Log.e("DNS", String.format("spoof=%s sniff=%s", spoofing, sniffing));
+        if (!sniffing && spoofing) {
+            String path = getApplicationInfo().dataDir;
+            final String cmd = String.format("LD_LIBRARY_PATH=%s/lib/ %s/lib/libdnssniff.so wlan0", path, path);
+            setStatus(R.string.spoofNsniff);
+            progSession.addCommand(new String[]{cmd}, 0,
+                    new Shell.OnCommandLineListener() {
+                        @Override
+                        public void onCommandResult(int commandCode, int exitCode) {
+                            Log.i("DNS", String.format("%s \n(exit code: %d)", cmd, exitCode));
+                            if (spoofing) setStatus(R.string.spoofing);
+                            else setStatus(R.string.idle);
                         }
-                        Log.i("ROOT",  String.format("%s \n(exit code: %d)", cmd, exitCode));
-                    }
-                    @Override
-                    public void onLine(String line) {
-                        Log.i("DNS", line);
-                    }
-                });
+                        @Override
+                        public void onLine(String line) {
+                            Log.i("DNS", line);
+                        }
+                    });
+        } else if (!sniffing) {
+            Toast.makeText(this,"Start spoofing first!", Toast.LENGTH_SHORT).show();
+        }else{
+            if (spoofing) setStatus(R.string.spoofing);
+            else setStatus(R.string.idle);
+            String cmd = "pid_dns=$(pgrep -f libdnssniff.so)";
+            sendGenericRootCommand(cmd);
+            cmd = "kill -2 $pid_dns";
+            sendGenericRootCommand(cmd);
+        }
     }
 
     private void sendGetArpPid(){
@@ -186,10 +211,10 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void openRootShell() {
-        if (rootSession != null) return;
+    private Shell.Interactive openRootShell(Shell.Interactive session) {
+        if (session != null) return session;
         // start the shell in the background and keep it alive as long as the app is running
-        rootSession = new Shell.Builder().
+        session = new Shell.Builder().
                 useSU().
                 setWantSTDERR(true).
                 setWatchdogTimeout(0).
@@ -202,12 +227,12 @@ public class MainActivity extends AppCompatActivity {
                             List<String> errorInfo = new ArrayList<String>();
                             errorInfo.add("Error opening root shell: exitCode " + exitCode);
                             updateResultStatus(false, errorInfo);
-                            rootSession = null;
                         } else{
                             updateResultStatus(true, output);
                         }
                     }
                 });
+        return session;
     }
 
     /*********************************** NATIVE FUNCTIONS *****************************************/
